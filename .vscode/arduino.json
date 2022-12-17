@@ -1,0 +1,4 @@
+{
+    "sketch": "custom-keyboard.ino",
+    "board": "arduino:sam:arduino_due_x_dbg"
+}
