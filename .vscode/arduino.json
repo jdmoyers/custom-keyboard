@@ -1,4 +1,5 @@
 {
     "sketch": "custom-keyboard.ino",
-    "board": "arduino:sam:arduino_due_x_dbg"
+    "board": "arduino:sam:arduino_due_x_dbg",
+    "port": "/dev/tty.usbmodem14101"
 }
