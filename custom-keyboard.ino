@@ -6,8 +6,8 @@
 #define NA 99
 #define MAX_NOTES 98
 
-const double VELOCITY_MAX = 150;
-const double VELOCITY_AVG = 60;
+const double VELOCITY_MAX = 200;
+const double VELOCITY_AVG = 75;
 
 uint8_t colPins[COLS] = {28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39};
 uint8_t rowPins[ROWS] = {40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53};
@@ -55,8 +55,8 @@ void setup()
 
   delay(2000);
 
-  Serial.begin(115200);
-  Serial.println("Initialized!");
+  // Serial.begin(115200);
+  // Serial.println("Initialized!");
 }
 
 void handleChange (byte x, byte y, byte thisState) 
@@ -65,16 +65,9 @@ void handleChange (byte x, byte y, byte thisState)
   byte pairedState = keyStates[pairedKey][y][0];
   byte pairedTime = keyStates[pairedKey][y][1];
   byte thisTime = thisState == LOW ? -1 : millis();
-  Serial.print("Pair: ");
-  Serial.print(pairedKey);
-  Serial.print(", ");
-  Serial.print(y);
-  Serial.print(" - ");
-  Serial.print(noteMap[y][x]);
 
   if(pairedState == LOW && thisState == LOW)
   {
-    Serial.print(": Released");
     noteOff(0, noteMap[y][x], 128);
     MidiUSB.flush();
   }
@@ -83,45 +76,33 @@ void handleChange (byte x, byte y, byte thisState)
   { 
     byte difference = pairedTime > thisTime ? pairedTime - thisTime : thisTime - pairedTime;
     int velocity = calculateVelocity(difference);
-
-    
-    Serial.print(": Pressed with velocity ");
-    Serial.print(velocity);
     
     noteOn(0, noteMap[y][x], velocity);
     MidiUSB.flush();
   }
 
-  Serial.println();
   keyStates[x][y][0] = thisState;
   keyStates[x][y][1] = thisTime;
 }
 
 int calculateVelocity(int difference) 
 {
-  Serial.print(" DIFF: ");
-  Serial.print(difference);
   if(difference > VELOCITY_MAX)
   {
     return 1;
   }
+  
+  if(difference == VELOCITY_AVG)
+  {
+    return 64;
+  }
 
   if(difference < VELOCITY_AVG)
   {
-    Serial.print(" (quick - ");
-    Serial.print(VELOCITY_AVG - difference);
-    Serial.print(" - ");
-    Serial.print((VELOCITY_AVG - difference) / 64);
-    Serial.print(")");
-    return 64 + (VELOCITY_AVG - difference);
+    return 64 + ((VELOCITY_AVG - difference) / VELOCITY_AVG) * 64;
   }
 
-  Serial.print(" (slow - ");
-  Serial.print(difference - VELOCITY_AVG);
-  Serial.print(" - ");
-  Serial.print((difference - VELOCITY_AVG) / 64);
-  Serial.print(")");
-  return 64 - (difference - VELOCITY_AVG);
+  return 64 - (difference - VELOCITY_AVG) / (VELOCITY_MAX - VELOCITY_AVG) * 64;
 }
 
 void noteOn(byte channel, byte pitch, byte velocity)
