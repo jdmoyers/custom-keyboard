@@ -11,6 +11,7 @@ const double VELOCITY_AVG = 75;
 
 uint8_t colPins[COLS] = {28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39};
 uint8_t rowPins[ROWS] = {40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53};
+int pairedKeys[COLS][ROWS];
 
 // Notes can be found here: https://syntheway.com/MIDI_Keyboards_Middle_C_MIDI_Note_Number_60_C4.htm
 
@@ -45,6 +46,7 @@ void setup()
     {
       keyStates[x][y][0] = LOW;
       keyStates[x][y][1] = -1;
+      pairedKeys[x][y] = x & 1 ? x + 1 : x - 1;
     }
   }
 
@@ -61,7 +63,7 @@ void setup()
 
 void handleChange (byte x, byte y, byte thisState) 
 {
-  int pairedKey = x % 2 == 0 ? x + 1 : x - 1;
+  int pairedKey = pairedKeys[x][y];
   byte pairedState = keyStates[pairedKey][y][0];
   byte pairedTime = keyStates[pairedKey][y][1];
   byte thisTime = thisState == LOW ? -1 : millis();
