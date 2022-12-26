@@ -6,8 +6,8 @@
 #define NA 99
 #define MAX_NOTES 98
 
-const double VELOCITY_MAX = 200;
-const double VELOCITY_AVG = 75;
+const int VELOCITY_MAX = 200;
+const int VELOCITY_AVG = 75;
 
 uint8_t colPins[COLS] = {28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39};
 uint8_t rowPins[ROWS] = {40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53};
@@ -35,6 +35,7 @@ const byte noteMap[ROWS][COLS] = {
 };
 
 byte keyStates[COLS][ROWS][2];
+int velocities[VELOCITY_MAX];
 
 void setup()
 {
@@ -53,6 +54,11 @@ void setup()
   for (int y = 0; y < ROWS; y++)
   {
     pinMode(rowPins[y], INPUT);
+  }
+
+  for(int v = 1; v <= VELOCITY_MAX; v++)
+  {
+    velocities[v] = calculateVelocity(v);
   }
 
   delay(2000);
@@ -77,7 +83,7 @@ void handleChange (byte x, byte y, byte thisState)
   if(pairedState == HIGH && thisState == HIGH)
   { 
     byte difference = pairedTime > thisTime ? pairedTime - thisTime : thisTime - pairedTime;
-    int velocity = calculateVelocity(difference);
+    int velocity = difference > VELOCITY_MAX ? 1 : velocities[difference];
     
     noteOn(0, noteMap[y][x], velocity);
     MidiUSB.flush();
@@ -89,11 +95,6 @@ void handleChange (byte x, byte y, byte thisState)
 
 int calculateVelocity(int difference) 
 {
-  if(difference > VELOCITY_MAX)
-  {
-    return 1;
-  }
-  
   if(difference == VELOCITY_AVG)
   {
     return 64;
