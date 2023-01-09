@@ -63,34 +63,61 @@ void setup()
 
   delay(2000);
 
-  // Serial.begin(115200);
-  // Serial.println("Initialized!");
+  Serial.begin(115200);
+  Serial.println("Initialized!");
 }
 
 void handleChange (byte x, byte y, byte thisState) 
 {
+  int changeType;
+
+  switch(x) {
+    case 1:
+    case 3:
+    case 6:
+    case 7:
+    case 10:
+    case 11:
+      changeType = 1;
+    default:
+      changeType = 0;
+  }
+
   int pairedKey = pairedKeys[x][y];
   byte pairedState = keyStates[pairedKey][y][0];
   byte pairedTime = keyStates[pairedKey][y][1];
   byte thisTime = thisState == LOW ? -1 : millis();
 
-  if(pairedState == LOW && thisState == LOW)
+  if(changeType == 1 && thisState == HIGH)
   {
-    noteOff(0, noteMap[y][x], 128);
-    MidiUSB.flush();
-  }
+    keyStates[x][y][0] = HIGH;
+    keyStates[x][y][1] = thisTime;
 
-  if(pairedState == HIGH && thisState == HIGH)
-  { 
     byte difference = pairedTime > thisTime ? pairedTime - thisTime : thisTime - pairedTime;
     int velocity = difference > VELOCITY_MAX ? 1 : velocities[difference];
     
     noteOn(0, noteMap[y][x], velocity);
     MidiUSB.flush();
-  }
+  }  
 
-  keyStates[x][y][0] = thisState;
-  keyStates[x][y][1] = thisTime;
+  if(changeType == 0)
+  {
+    if(thisState == LOW)
+    {
+      keyStates[x][y][0] = LOW;
+      keyStates[x][y][1] = -1;
+      keyStates[pairedKey][y][0] = LOW;
+      keyStates[pairedKey][y][1] = -1;
+
+      noteOff(0, noteMap[y][x], 127);
+      MidiUSB.flush();
+    }
+    else
+    {
+      keyStates[x][y][0] = HIGH;
+      keyStates[x][y][1] = thisTime;
+    }
+  }
 }
 
 int calculateVelocity(int difference) 
